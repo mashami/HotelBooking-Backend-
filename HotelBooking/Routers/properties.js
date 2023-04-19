@@ -33,9 +33,16 @@ router.post("/create", upload.single("image"), async (req, res) => {
             desc,
             image: result.secure_url,
         })
-        return res.status(200).json(newProperties)
+        return res.status(200).json({
+            success: true,
+            data: newProperties,
+            message:"data saved successfull"
+        })
     } catch (error) {
-        return res.status(500).json({message:"Fail", error:error.message})
+        return res.status(500).json({
+            status:false,
+            message:"Fail", 
+            error:error.message})
     }
    
 });
@@ -43,16 +50,28 @@ router.post("/create", upload.single("image"), async (req, res) => {
 router.get("/all", async (req, res) => {
     try {
         const properties = await Properties.find();
-        return res.status(200).json(properties)
+        return res.status(200).json({
+            success: true,
+            data: properties,
+            message:"data rended successfull"
+        })
     } catch (err) {
-        return res.status(401).json(err.message)
-    }
+        return res.status(401).json({
+            message:"Fail to get properties",
+            status: "401",
+            err:err.message
+    })
+}
 });
 
 router.get("/:id", async (req, res) => {
     try {
         const property = await Properties.findById(req.params.id);
-        return res.status(200).json(property);
+        return res.status(200).json({
+            success: true,
+            data: property,
+            message:"data rended successfull"
+        });
     } catch (err) {
         return res.status(500).json(err.message)
     }
