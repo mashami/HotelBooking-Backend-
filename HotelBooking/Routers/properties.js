@@ -73,7 +73,11 @@ router.get("/:id", async (req, res) => {
             message:"data rended successfull"
         });
     } catch (err) {
-        return res.status(500).json(err.message)
+        return res.status(500).json({
+            message:"Fail to get property",
+            status: "500",
+            err:err.message
+        })
     }
 });
 
