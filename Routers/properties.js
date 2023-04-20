@@ -1,13 +1,30 @@
 const router = require("express").Router();
 const { model } = require("mongoose");
-const multer = require("multer");
 const Properties = require("../models/Property")
+
+const multer = require('multer');
+
+var upload = multer({
+  fileFilter: function (req, file, cb,res) {
+    const validImageExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
+    const fileExtension = file.originalname.split('.').pop();
+    if (validImageExtensions.includes('.' + fileExtension)) {
+      cb(null, true);
+    } else {
+      return res.status(402).json({
+        status:false,
+        message:'Invalid file type. Only .jpg, .jpeg, .png, and .gif files are allowed.'});
+    }
+  }
+});
+
+
+
+
 const cloudinary = require("../happer/cloudinary")
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, "images")
-
-    }, filename(req, file, cb) { 
     }, filename(req, file, cb) {
 
 
@@ -15,7 +32,7 @@ const storage = multer.diskStorage({
     },
 });
 
-const upload = multer({ storage: storage })
+upload = multer({ storage: storage })
 
 
 router.post("/create", upload.single("image"), async (req, res) => {

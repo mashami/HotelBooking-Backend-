@@ -3,6 +3,7 @@ const app = express();
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const properties = require("./Routers/properties");
+const auth = require("./Routers/authentacation")
 
 const multer = require("multer")
 // const swaggerDocumention = require("./happer/documentations")
@@ -50,7 +51,7 @@ app.use((req, res, next) => {
 
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
-
+app.use("/api/authentication",auth);
 app.use("/api/property", properties);
 
 // swaggerDocumention(app);
