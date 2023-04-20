@@ -7,9 +7,7 @@ const cloudinary = require("../happer/cloudinary")
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, "images")
-    }, filename(req, file, cb) {
-        // cb(null, "image2.jpeg"); 
-        // cb(null, req.body.name); 
+    }, filename(req, file, cb) { 
         cb(null, file.originalname)
     },
 });
@@ -29,7 +27,7 @@ router.post("/create", upload.single("image"), async (req, res) => {
         if (!result) return res.status(400).json('Image not uploaded')
         const newProperties = await Properties.create({ 
             title, 
-            location,
+            location,   
             desc,
             image: result.secure_url,
         })
