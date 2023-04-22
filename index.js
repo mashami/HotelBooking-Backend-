@@ -4,7 +4,6 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const properties = require("./Routers/properties");
 const auth = require("./Routers/authentacation")
-
 const multer = require("multer")
 // const swaggerDocumention = require("./happer/documentations")
 const { MONGO_URI } = process.env;
