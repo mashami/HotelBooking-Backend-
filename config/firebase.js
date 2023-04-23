@@ -1,7 +1,7 @@
 const dotenv = require("dotenv");
 const { initializeApp } = require("firebase/app");
 const { getAuth } = require("firebase/auth");
-
+const admin = require("firebase-admin");
 dotenv.config();
 
 const firebaseConfig = {
