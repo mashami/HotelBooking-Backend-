@@ -3,7 +3,7 @@ const { model } = require("mongoose");
 
 const auth = require("../config/firebase");
 const admin = require("firebase-admin")
-const { createUserWithEmailAndPassword,signInWithEmailAndPassword } = require("firebase/auth")
+const { createUserWithEmailAndPassword,signInWithEmailAndPassword,sendPasswordResetEmail } = require("firebase/auth")
 
 
 // admin.initializeApp({
@@ -99,7 +99,25 @@ router.post("/login", async (req,res) =>{
     }
 });
 
+// =========================================================================================
 
+router.post('/resetPassword', async (req, res) => {
+    try {
+      const { email } = req.body;
+      await sendPasswordResetEmail(auth,email);
+     return res.status(200).json({
+        message: 'Password reset email sent successfully.'
+      });
+    } catch (error) {
+      
+      return res.status(500).json({
+        error: error.message,
+        message: 'Failed to send password reset email.'
+      });
+    }
+    
+  });
+  
 
 
 
