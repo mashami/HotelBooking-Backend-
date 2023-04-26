@@ -4,6 +4,11 @@ const { firebaseConfig } = require("../config/firebase");
 const auth = require("../config/firebase");
 const admin = require("firebase-admin");
 // const {db} = require("../config/firebase")
+// const { getAuth, signInWithPopup, GoogleAuthProvider }= require("firebase/auth");
+const { getAuth, signInWithPopup }= require("firebase/auth");
+
+const {getStorage,ref,getDownloadURL,uploadBytesResumable} = require("firebase/storage")
+
 
 const serviceAccount = {
     projectId: process.env.FIREBASE_PROJECT_ID,
@@ -14,11 +19,13 @@ const serviceAccount = {
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
 });
-const { 
+const {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     sendPasswordResetEmail,
-    
+    sendEmailVerification,
+
+
 } = require("firebase/auth")
 // const credentials = require("../firebaseConfig.json");
 
@@ -159,85 +166,181 @@ router.post('/resetPassword', async (req, res) => {
 
 
 router.get("/getAll", async (req, res) => {
-  try {
-    
+    try {
 
-    const listUsersResult = await admin.auth().listUsers();
-    const users = listUsersResult.users.map(userRecord => {
-      const user = userRecord.toJSON();
-      return {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-        emailVerified: user.emailVerified,
-        disabled: user.disabled
-      };
-    });
-    return res.status(200).json(users);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      error: error.message,
-      message: "Failed to get users."
-    });
-  }
+
+        const listUsersResult = await admin.auth().listUsers();
+        const users = listUsersResult.users.map(userRecord => {
+            const user = userRecord.toJSON();
+            return {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                emailVerified: user.emailVerified,
+                disabled: user.disabled
+            };
+        });
+        return res.status(200).json(users);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            error: error.message,
+            message: "Failed to get users."
+        });
+    }
 });
 
 // ============================================== get by uid =========================
 
 router.get('/user/:uid', async (req, res) => {
     try {
-      const { uid } = req.params;
-      const userRecord = await admin.auth().getUser(uid);
-      const userData = {
-        uid: userRecord.uid,
-        email: userRecord.email,
-        displayName: userRecord.displayName,
-        photoURL: userRecord.photoURL,
-        phoneNumber: userRecord.phoneNumber,
-        disabled: userRecord.disabled,
-        metadata: userRecord.metadata,
-        providerData: userRecord.providerData
-      };
-      return res.status(200).json(userData);
+        const { uid } = req.params;
+        const userRecord = await admin.auth().getUser(uid);
+        const userData = {
+            uid: userRecord.uid,
+            email: userRecord.email,
+            displayName: userRecord.displayName,
+            photoURL: userRecord.photoURL,
+            phoneNumber: userRecord.phoneNumber,
+            disabled: userRecord.disabled,
+            metadata: userRecord.metadata,
+            providerData: userRecord.providerData
+        };
+        return res.status(200).json(userData);
     } catch (error) {
-      return res.status(500).json({ status: 'fail', message: error.message });
+        return res.status(500).json({ status: 'fail', message: error.message });
     }
-  });
+});
 
 // ==================================== Delete a user =================================
 
 router.delete('/deleteUser/:uid', async (req, res) => {
     const uid = req.params.uid;
     try {
-      await admin.auth().deleteUser(uid);
-      return res.status(200).json({
-        message: `A user with UID ${uid} has been deleted successfully`,
-      });
+        await admin.auth().deleteUser(uid);
+        return res.status(200).json({
+            message: `A user with UID ${uid} has been deleted successfully`,
+        });
     } catch (error) {
-      return res.status(500).json({
-        error: error.message,
-        message: 'Failed to delete user',
-      });
+        return res.status(500).json({
+            error: error.message,
+            message: 'Failed to delete user',
+        });
     }
-  });
-  
-//   =========================== Update a user =================================
-router.patch("/updateUser/:uid", async(req,res)=>{
-
-
-const  {email}  = req.body;
-const uid = req.params.uid
-
-try {
-  const userRecord = await admin.auth().updateUser(uid, { email });
-  console.log(`Successfully updated user: ${userRecord.uid}`);
-  return res.status(200).json(userRecord);
-} catch (error) {
-  console.error('Error updating user:', error);
-  return res.status(500).json({ message: 'Failed to update user.' });
-}
 });
+
+//   =========================== Update a user =================================
+router.patch("/updateUser/:uid", async (req, res) => {
+
+
+    const { email } = req.body;
+    const uid = req.params.uid
+
+    try {
+        const userRecord = await admin.auth().updateUser(uid, { email });
+        console.log(`Successfully updated user: ${userRecord.uid}`);
+        return res.status(200).json(userRecord);
+    } catch (error) {
+        console.error('Error updating user:', error);
+        return res.status(500).json({ message: 'Failed to update user.' });
+    }
+});
+
+// ================================ Sign up google acount =================================
+ router.post('/signUpGoogleAccount', async (req, res) => {
+    let provider;
+    // const provider = new admin.auth.GoogleAuthProvider()
+    const auth = getAuth();
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        // This gives you a Google Access Token. You can use it to access the Google API.
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        const token = credential.accessToken;
+        // The signed-in user info.
+        const user = result.user;
+        // IdP data available using getAdditionalUserInfo(result)
+        return res.status(200).json(user)
+      }).catch((error) => {
+        // Handle Errors here.
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        // The email of the user's account used.
+        const email = error.customData.email;
+        // The AuthCredential type that was used.
+        const credential = GoogleAuthProvider.credentialFromError(error);
+        return res.status(200).json({
+            error:error.message
+        })
+      });
+
+ });
+
+
+
+
+// router.post('/signUpGoogleAccount', async (req, res) => {
+//     const { email, password } = req.body;
+//     let uid;
+//     try {
+//         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+//         const user = userCredential.user;
+
+//         console.log(user)
+//         uid = user.uid
+//         await user.sendEmailVerification();
+//         await signInWithEmailAndPassword(auth, email, password);
+
+//         return res.redirect('/');
+//     } catch (error) {
+
+//         console.log(error);
+//         await admin.auth().deleteUser(uid);
+//         console.log(error);
+//         res.status(500).json({ message: 'Error signing up', error: error.message });
+//     }
+// });
+
+// ===========================================================================================
+const multer = require("multer")
+const storage = getStorage()
+const upload= multer({ storage:multer.memoryStorage() })
+
+router.post("/upload",upload.single("filename"), async(req,res)=>{
+
+    try {
+        const dateTime =giveCurrentDateTime();
+        const storegeRef= ref(storage,`files/${req.file.originalname+ " "+ dateTime}`);
+
+        const metadata ={
+            contentType: req.file.mimetype,
+        }
+        const snapshot = await uploadBytesResumable(storegeRef, req.file.buffer,metadata)
+
+        const downloadURL = await getDownloadURL(snapshot.ref)
+
+        console.log("File uploaded successful")
+        return res.send({
+            message:'file uploaded successful to firebase storage',
+            name:req.file.originalname,
+            type: req.file.mimetype,
+            downloadURL: downloadURL,
+            status:'200'
+        })
+        
+    } catch (error) {
+        return res.status(500).json({
+            error:error.message,
+            message:"Fail to upload a file"
+        })
+    }
+});
+const giveCurrentDateTime = () =>{
+    const today= new Date();
+    const date = today.getFullYear() + '-'+ (today.getMonth()+1) + '-' + today.getDay();
+    const time = today.getHours()+ ':' + today.getMinutes() + ':' + today.getSeconds();
+    const dateTime = date + ' ' + time;
+    return dateTime
+}
 
 module.exports = router;

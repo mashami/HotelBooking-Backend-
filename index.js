@@ -5,6 +5,8 @@ const mongoose = require("mongoose");
 const properties = require("./Routers/properties");
 const auth = require("./Routers/authentacation")
 const multer = require("multer")
+// const router = require("express").Router();
+// const passport = require('passport');
 // const swaggerDocumention = require("./happer/documentations")
 const { MONGO_URI } = process.env;
 const cors = require('cors');
@@ -47,10 +49,14 @@ app.use((req, res, next) => {
     console.log(req.path, req.method)
     next();
 })
-
+// router.get("/",(req,res)=>{
+//      res.render("pages/index")
+// })
+// router.get("/google",passport.Authenticator('google',{scope:['profile','email']}))
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
 app.use("/api/authentication",auth);
 app.use("/api/property", properties);
+
 
 // swaggerDocumention(app);
