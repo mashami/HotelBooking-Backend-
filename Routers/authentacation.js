@@ -7,8 +7,8 @@ const admin = require("firebase-admin");
 // const { getAuth, signInWithPopup, GoogleAuthProvider }= require("firebase/auth");
 const { getAuth, signInWithPopup }= require("firebase/auth");
 
-const {getStorage,ref,getDownloadURL,uploadBytesResumable} = require("firebase/storage")
-
+const {getStorage,ref,getDownloadURL,uploadBytesResumable } = require("firebase/storage")
+const { child }=require("firebase/storage");
 
 const serviceAccount = {
     projectId: process.env.FIREBASE_PROJECT_ID,
@@ -302,39 +302,40 @@ router.patch("/updateUser/:uid", async (req, res) => {
 // });
 
 // ===========================================================================================
+
+// ============================================ Upload a picture ===========================
 const multer = require("multer")
-const storage = getStorage()
-const upload= multer({ storage:multer.memoryStorage() })
+// const storage = getStorage()
+// const upload= multer({ storage:multer.memoryStorage() })
 
-router.post("/upload",upload.single("filename"), async(req,res)=>{
+// router.post("/upload",upload.single("filename"), async(req,res)=>{
+//     try {
+//         const dateTime =giveCurrentDateTime();
+//         const storegeRef= ref(storage,`files/${req.file+ " "+ dateTime}`);
 
-    try {
-        const dateTime =giveCurrentDateTime();
-        const storegeRef= ref(storage,`files/${req.file.originalname+ " "+ dateTime}`);
+//         const metadata ={
+//             contentType: req.file.mimetype,
+//         }
+//         const snapshot = await uploadBytesResumable(storegeRef, req.file.buffer,metadata)
+//         // , req.file.buffer
+//         const downloadURL = await getDownloadURL(snapshot.ref)
 
-        const metadata ={
-            contentType: req.file.mimetype,
-        }
-        const snapshot = await uploadBytesResumable(storegeRef, req.file.buffer,metadata)
-
-        const downloadURL = await getDownloadURL(snapshot.ref)
-
-        console.log("File uploaded successful")
-        return res.send({
-            message:'file uploaded successful to firebase storage',
-            name:req.file.originalname,
-            type: req.file.mimetype,
-            downloadURL: downloadURL,
-            status:'200'
-        })
+//         console.log("File uploaded successful")
+//         return res.send({
+//             message:'file uploaded successful to firebase storage',
+//             name:req.file,
+//             type: req.file.mimetype,
+//             downloadURL: downloadURL,
+//             status:'200'
+//         }) 
         
-    } catch (error) {
-        return res.status(500).json({
-            error:error.message,
-            message:"Fail to upload a file"
-        })
-    }
-});
+//     } catch (error) {
+//         return res.status(500).json({
+//             error:error.message,
+//             message:"Fail to upload a file"
+//         })
+//     }
+// });
 const giveCurrentDateTime = () =>{
     const today= new Date();
     const date = today.getFullYear() + '-'+ (today.getMonth()+1) + '-' + today.getDay();
@@ -342,5 +343,50 @@ const giveCurrentDateTime = () =>{
     const dateTime = date + ' ' + time;
     return dateTime
 }
+
+const storage = getStorage();
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { files: 5 },
+});
+
+router.post("/upload", upload.array("images", 5), async (req, res) => {
+  try {
+    const dateTime = giveCurrentDateTime();
+    const storageRef = ref(storage, `files/`);
+    const uploadedFiles = [];
+
+    for (const file of req.files) {
+      const fileRef = ref(storageRef, `${file.originalname}_${dateTime}`);
+      const metadata = {
+        contentType: file.mimetype,
+      };
+      const snapshot = await uploadBytesResumable(
+        fileRef,
+        file.buffer,
+        metadata
+      );
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      console.log("File uploaded successfully");
+      uploadedFiles.push({
+        name: file.originalname,
+        type: file.mimetype,
+        downloadURL: downloadURL,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Files uploaded successfully to Firebase storage",
+      files: uploadedFiles,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message,
+      message: "Failed to upload files",
+    });
+  }
+});
 
 module.exports = router;

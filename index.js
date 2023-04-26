@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const dotenv = require("dotenv");
+
 const mongoose = require("mongoose");
 const properties = require("./Routers/properties");
 const auth = require("./Routers/authentacation")
@@ -14,7 +14,7 @@ const cors = require('cors');
 
 const bodyParser = require("body-parser");
 
-
+const dotenv = require("dotenv");
 dotenv.config();
 
 require('dotenv').config()
@@ -29,17 +29,19 @@ app.use(cors({
 
 mongoose.set('strictQuery', true);
 // console,log()
+console.log("Waiting for connection....");
 mongoose.connect(process.env.MONGO_URI)
     .then(() => {
         //listening to server
-
+      
         app.listen(process.env.API_PORT, () => {
+            
             console.log("Connected to MangoDB $ Server Its listening on port", process.env.API_PORT)
 
 
 
         })
-    }).catch(error => console.log(error.message));
+    }).catch(error => console.log("Check Network or "+error.message));
 //middleware
 app.use(express.json())
 
